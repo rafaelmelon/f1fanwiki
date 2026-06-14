@@ -4,34 +4,17 @@ import type { Circuit } from "../lib/types";
 import { useFetch } from "../lib/useFetch";
 import Loader from "../components/Loader";
 import ErrorMessage from "../components/ErrorMessage";
+import SortableHeader, { type SortDir } from "../components/SortableHeader";
+import { usePageTitle } from "../lib/usePageTitle";
 
 type SortKey = "name" | "country" | "locality";
-type SortDir = "asc" | "desc";
 type StatusFilter = "all" | "active" | "historic";
 
 const selectClass =
   "rounded-lg border border-f1-border bg-f1-surface px-3 py-2 text-sm text-f1-text focus:border-f1-red focus:outline-none";
 
-const thClass =
-  "px-3 py-2.5 cursor-pointer select-none hover:text-f1-text transition-colors whitespace-nowrap text-xs uppercase tracking-wider";
-
-function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
-  if (!active) {
-    return (
-      <svg className="ml-1 inline h-3 w-3 opacity-30" viewBox="0 0 10 14" fill="currentColor">
-        <path d="M5 0L10 5H0z" />
-        <path d="M5 14L0 9H10z" />
-      </svg>
-    );
-  }
-  return (
-    <svg className="ml-1 inline h-3 w-3 text-f1-red" viewBox="0 0 10 6" fill="currentColor">
-      {dir === "asc" ? <path d="M5 0L10 6H0z" /> : <path d="M5 6L0 0H10z" />}
-    </svg>
-  );
-}
-
 export default function Circuits() {
+  usePageTitle("Circuits");
   const [search, setSearch] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -175,16 +158,10 @@ export default function Circuits() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-f1-border text-left text-f1-text-muted">
-                  <th className={thClass} onClick={() => toggleSort("name")}>
-                    Circuit <SortIcon active={sortKey === "name"} dir={sortDir} />
-                  </th>
+                  <SortableHeader label="Circuit" active={sortKey === "name"} dir={sortDir} onSort={() => toggleSort("name")} />
                   <th className="px-3 py-2.5 hidden sm:table-cell text-xs uppercase tracking-wider">Status</th>
-                  <th className={thClass} onClick={() => toggleSort("locality")}>
-                    City <SortIcon active={sortKey === "locality"} dir={sortDir} />
-                  </th>
-                  <th className={thClass} onClick={() => toggleSort("country")}>
-                    Country <SortIcon active={sortKey === "country"} dir={sortDir} />
-                  </th>
+                  <SortableHeader label="City" active={sortKey === "locality"} dir={sortDir} onSort={() => toggleSort("locality")} />
+                  <SortableHeader label="Country" active={sortKey === "country"} dir={sortDir} onSort={() => toggleSort("country")} />
                   <th className="px-3 py-2.5 hidden md:table-cell text-xs uppercase tracking-wider text-f1-text-muted">
                     Coordinates
                   </th>

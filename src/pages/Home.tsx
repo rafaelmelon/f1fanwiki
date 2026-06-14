@@ -3,6 +3,8 @@ import { getDriverStandings, getConstructorStandings, getRaces } from "../lib/ap
 import type { DriverStanding, ConstructorStanding, Race } from "../lib/types";
 import { useFetch } from "../lib/useFetch";
 import { DriverStandingsTable, ConstructorStandingsTable } from "../components/StandingsTable";
+import { GREATEST_DRIVERS } from "../lib/greatest";
+import { usePageTitle } from "../lib/usePageTitle";
 import Loader from "../components/Loader";
 import ErrorMessage from "../components/ErrorMessage";
 
@@ -17,10 +19,13 @@ function NextRaceCard({ races }: { races: Race[] }) {
 
   return (
     <Link
-      to={`/season/${next.season}`}
+      to={`/season/${next.season}/race/${next.round}`}
       className="block rounded-xl border border-f1-border bg-f1-surface p-5 hover:border-f1-red/50 transition-colors"
     >
-      <p className="text-xs font-medium uppercase tracking-wider text-f1-red">Next Race</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium uppercase tracking-wider text-f1-red">Next Race</p>
+        <span className="text-xs text-f1-text-muted">View weekend &rarr;</span>
+      </div>
       <h3 className="mt-1 text-lg font-bold">{next.raceName}</h3>
       <p className="mt-1 text-sm text-f1-text-muted">
         {next.Circuit.circuitName} &middot; {next.Circuit.Location.locality},{" "}
@@ -39,6 +44,7 @@ function NextRaceCard({ races }: { races: Race[] }) {
 }
 
 export default function Home() {
+  usePageTitle(`${currentYear} Season`);
   const { data: drivers, loading: dl, error: de } = useFetch<DriverStanding[]>(
     () => getDriverStandings(currentYear),
     [currentYear]
@@ -149,7 +155,7 @@ export default function Home() {
               </div>
               <p className="text-lg font-bold group-hover:text-f1-red transition-colors">Greatest Drivers</p>
               <p className="mt-1 text-sm text-f1-text-muted">
-                All 34 World Champions ranked by titles, wins, podiums, poles, and win rate across eras.
+                All {GREATEST_DRIVERS.length} World Champions ranked by titles, wins, podiums, poles, and win rate across eras.
               </p>
             </Link>
             <Link

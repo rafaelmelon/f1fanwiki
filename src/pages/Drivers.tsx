@@ -8,12 +8,13 @@ import Loader from "../components/Loader";
 import ErrorMessage from "../components/ErrorMessage";
 import PinButton from "../components/PinButton";
 import DriverLabels from "../components/DriverLabels";
+import SortableHeader, { type SortDir } from "../components/SortableHeader";
+import { usePageTitle } from "../lib/usePageTitle";
 
 const PAGE_SIZE = 50;
 
 type StatusFilter = "all" | "active" | "champion";
 type SortKey = "name" | "code" | "nationality" | "dob" | "number";
-type SortDir = "asc" | "desc";
 
 const selectClass =
   "rounded-lg border border-f1-border bg-f1-surface px-3 py-2 text-sm text-f1-text focus:border-f1-red focus:outline-none";
@@ -31,23 +32,8 @@ function compareNum(a: string | undefined, b: string | undefined): number {
   return na - nb;
 }
 
-function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
-  if (!active) {
-    return (
-      <svg className="ml-1 inline h-3 w-3 opacity-30" viewBox="0 0 10 14" fill="currentColor">
-        <path d="M5 0L10 5H0z" />
-        <path d="M5 14L0 9H10z" />
-      </svg>
-    );
-  }
-  return (
-    <svg className="ml-1 inline h-3 w-3 text-f1-red" viewBox="0 0 10 6" fill="currentColor">
-      {dir === "asc" ? <path d="M5 0L10 6H0z" /> : <path d="M5 6L0 0H10z" />}
-    </svg>
-  );
-}
-
 export default function Drivers() {
+  usePageTitle("Drivers");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [nationalityFilter, setNationalityFilter] = useState("");
@@ -158,9 +144,6 @@ export default function Drivers() {
     resetPage();
   };
 
-  const thClass =
-    "px-3 py-2 cursor-pointer select-none hover:text-f1-text transition-colors whitespace-nowrap";
-
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold">Drivers</h1>
@@ -250,29 +233,13 @@ export default function Drivers() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-f1-border text-left text-f1-text-muted text-xs uppercase tracking-wider">
-                  <th className={thClass} onClick={() => toggleSort("name")}>
-                    Name <SortIcon active={sortKey === "name"} dir={sortDir} />
-                  </th>
-                  <th className={`${thClass} hidden lg:table-cell`} onClick={() => toggleSort("code")}>
-                    Code <SortIcon active={sortKey === "code"} dir={sortDir} />
-                  </th>
-                  <th className="px-3 py-2 hidden md:table-cell">Labels</th>
-                  <th className={thClass} onClick={() => toggleSort("nationality")}>
-                    Nationality <SortIcon active={sortKey === "nationality"} dir={sortDir} />
-                  </th>
-                  <th
-                    className={`${thClass} hidden sm:table-cell`}
-                    onClick={() => toggleSort("dob")}
-                  >
-                    DOB <SortIcon active={sortKey === "dob"} dir={sortDir} />
-                  </th>
-                  <th
-                    className={`${thClass} text-right hidden sm:table-cell`}
-                    onClick={() => toggleSort("number")}
-                  >
-                    No. <SortIcon active={sortKey === "number"} dir={sortDir} />
-                  </th>
-                  <th className="px-3 py-2 text-right w-20"></th>
+                  <SortableHeader label="Name" active={sortKey === "name"} dir={sortDir} onSort={() => toggleSort("name")} />
+                  <SortableHeader label="Code" active={sortKey === "code"} dir={sortDir} onSort={() => toggleSort("code")} className="hidden lg:table-cell" />
+                  <th className="px-3 py-2.5 hidden md:table-cell">Labels</th>
+                  <SortableHeader label="Nationality" active={sortKey === "nationality"} dir={sortDir} onSort={() => toggleSort("nationality")} />
+                  <SortableHeader label="DOB" active={sortKey === "dob"} dir={sortDir} onSort={() => toggleSort("dob")} className="hidden sm:table-cell" />
+                  <SortableHeader label="No." active={sortKey === "number"} dir={sortDir} onSort={() => toggleSort("number")} className="hidden sm:table-cell" align="right" />
+                  <th className="px-3 py-2.5 text-right w-20"></th>
                 </tr>
               </thead>
               <tbody>

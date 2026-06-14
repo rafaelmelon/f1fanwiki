@@ -2,12 +2,14 @@ import { useParams, Link } from "react-router-dom";
 import { getRaces, getDriverStandings, getConstructorStandings } from "../lib/api";
 import type { Race, DriverStanding, ConstructorStanding } from "../lib/types";
 import { useFetch } from "../lib/useFetch";
+import { usePageTitle } from "../lib/usePageTitle";
 import { DriverStandingsTable, ConstructorStandingsTable } from "../components/StandingsTable";
 import Loader from "../components/Loader";
 import ErrorMessage from "../components/ErrorMessage";
 
 export default function Season() {
   const { year } = useParams<{ year: string }>();
+  usePageTitle(`${year} Season`);
 
   const { data: races, loading: rl, error: re } = useFetch<Race[]>(
     () => getRaces(year!),
