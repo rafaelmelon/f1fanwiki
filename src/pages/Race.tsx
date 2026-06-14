@@ -71,46 +71,102 @@ function StatusDot({ status }: { status: WeekendSession["status"] }) {
   return <span className="inline-flex h-2.5 w-2.5 rounded-full border border-f1-border bg-f1-surface" />;
 }
 
-function SessionTimeline({ sessions, now }: { sessions: WeekendSession[]; now: Date }) {
+function SessionRow({
+  session,
+  now,
+  clickable,
+  onSelect,
+}: {
+  session: WeekendSession;
+  now: Date;
+  clickable: boolean;
+  onSelect: () => void;
+}) {
+  const showCountdown = session.status === "upcoming" && session.start;
+  const content = (
+    <>
+      <div className="flex items-center gap-3">
+        <StatusDot status={session.status} />
+        <span className={session.status === "done" ? "text-f1-text-muted" : "font-medium"}>
+          {session.label}
+        </span>
+        {session.status === "live" && (
+          <span className="rounded-full bg-f1-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+            Live
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2 text-right text-f1-text-muted">
+        {showCountdown ? (
+          <span className="font-mono tabular-nums">in {formatCountdown(session.start!, now)}</span>
+        ) : (
+          <span>{formatSessionTime(session.start)}</span>
+        )}
+        {clickable && (
+          <span className="inline-flex items-center gap-0.5 text-xs text-f1-red">
+            Results
+            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </span>
+        )}
+      </div>
+    </>
+  );
+
+  if (clickable) {
+    return (
+      <li>
+        <button
+          type="button"
+          onClick={onSelect}
+          className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-f1-surface-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-f1-red"
+        >
+          {content}
+        </button>
+      </li>
+    );
+  }
+
+  return (
+    <li
+      className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm ${
+        session.status === "live" ? "bg-f1-red/10" : ""
+      }`}
+    >
+      {content}
+    </li>
+  );
+}
+
+function SessionTimeline({
+  sessions,
+  now,
+  resultKeys,
+  onSelect,
+}: {
+  sessions: WeekendSession[];
+  now: Date;
+  resultKeys: Set<string>;
+  onSelect: (key: string) => void;
+}) {
   return (
     <div className="rounded-xl border border-f1-border bg-f1-surface p-5">
       <h2 className="mb-4 font-bold">Weekend Schedule</h2>
       <ul className="space-y-1">
-        {sessions.map((s) => {
-          const showCountdown = s.status === "upcoming" && s.start;
-          return (
-            <li
-              key={s.key}
-              className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm ${
-                s.status === "live" ? "bg-f1-red/10" : ""
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <StatusDot status={s.status} />
-                <span className={s.status === "done" ? "text-f1-text-muted" : "font-medium"}>
-                  {s.label}
-                </span>
-                {s.status === "live" && (
-                  <span className="rounded-full bg-f1-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                    Live
-                  </span>
-                )}
-              </div>
-              <div className="text-right text-f1-text-muted">
-                {showCountdown ? (
-                  <span className="font-mono tabular-nums">
-                    in {formatCountdown(s.start!, now)}
-                  </span>
-                ) : (
-                  <span>{formatSessionTime(s.start)}</span>
-                )}
-              </div>
-            </li>
-          );
-        })}
+        {sessions.map((s) => (
+          <SessionRow
+            key={s.key}
+            session={s}
+            now={now}
+            clickable={resultKeys.has(s.key)}
+            onSelect={() => onSelect(s.key)}
+          />
+        ))}
       </ul>
       <p className="mt-3 text-[11px] text-f1-text-muted">
-        Times shown in your local timezone. Live windows are estimated from start times.
+        Times shown in your local timezone. Live windows are estimated from start times. Click a
+        session with published results to open them; practice timing isn't provided by the API.
       </p>
     </div>
   );
@@ -303,6 +359,15 @@ export default function Race() {
   const hasSprint = !!sprint?.length;
   const hasPits = !!pitstops?.length;
 
+  // Schedule rows that map to a results view the API actually publishes.
+  const resultKeys = useMemo(() => {
+    const keys = new Set<string>();
+    if (hasRace) keys.add("race");
+    if (hasQuali) keys.add("qualifying");
+    if (hasSprint) keys.add("sprint");
+    return keys;
+  }, [hasRace, hasQuali, hasSprint]);
+
   // Auto-refresh data while the weekend is in progress.
   useEffect(() => {
     if (!weekend?.weekendActive || !year || !round) return;
@@ -392,7 +457,19 @@ export default function Race() {
             ))}
           </div>
 
-          {tab === "schedule" && <SessionTimeline sessions={sessions} now={now} />}
+          {tab === "schedule" && (
+            <SessionTimeline
+              sessions={sessions}
+              now={now}
+              resultKeys={resultKeys}
+              onSelect={(key) => {
+                if (key === "race" || key === "qualifying" || key === "sprint") {
+                  setTab(key);
+                  setTabTouched(true);
+                }
+              }}
+            />
+          )}
           {tab === "race" && results && <ResultsTable results={results.Results} points />}
           {tab === "qualifying" && qualifying && <QualifyingTable results={qualifying} />}
           {tab === "sprint" && sprint && <ResultsTable results={sprint} points />}
