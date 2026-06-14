@@ -6,54 +6,134 @@ import type {
   ConstructorStanding,
   Driver,
   Circuit,
+  RaceResult,
+  QualifyingResult,
+  PitStop,
 } from "./types";
 
 const BASE = "https://api.jolpi.ca/ergast/f1";
 const CACHE_TTL = 5 * 60 * 1000;
-const REQUEST_DELAY = 300;
+// Jolpica is rate-limited (~4 req/s burst). Cap concurrency to stay polite
+// while still letting independent requests run in parallel.
+const MAX_CONCURRENT = 4;
 
-const cache = new Map<string, { data: unknown; ts: number }>();
+interface CacheEntry {
+  data: unknown;
+  ts: number;
+}
 
-let queue: Promise<void> = Promise.resolve();
+const STORAGE_PREFIX = "f1wiki_cache:";
+const cache = new Map<string, CacheEntry>();
+const inflight = new Map<string, Promise<unknown>>();
 
-function enqueue<T>(fn: () => Promise<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    queue = queue.then(async () => {
-      await new Promise((r) => setTimeout(r, REQUEST_DELAY));
-      try {
-        resolve(await fn());
-      } catch (e) {
-        reject(e);
+function readCache(path: string): CacheEntry | undefined {
+  const mem = cache.get(path);
+  if (mem) return mem;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_PREFIX + path);
+    if (!raw) return undefined;
+    const entry = JSON.parse(raw) as CacheEntry;
+    cache.set(path, entry); // promote into memory
+    return entry;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeCache(path: string, entry: CacheEntry): void {
+  cache.set(path, entry);
+  try {
+    sessionStorage.setItem(STORAGE_PREFIX + path, JSON.stringify(entry));
+  } catch {
+    // Quota exceeded or storage unavailable — in-memory cache still works.
+  }
+}
+
+let active = 0;
+const waiters: Array<() => void> = [];
+
+function acquire(): Promise<void> {
+  if (active < MAX_CONCURRENT) {
+    active++;
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => waiters.push(resolve));
+}
+
+function release(): void {
+  active--;
+  const next = waiters.shift();
+  if (next) {
+    active++;
+    next();
+  }
+}
+
+/** Drop cached entries whose path contains `substring` (used by live polling). */
+export function invalidateCache(substring: string): void {
+  for (const key of cache.keys()) {
+    if (key.includes(substring)) cache.delete(key);
+  }
+  try {
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith(STORAGE_PREFIX) && key.includes(substring)) {
+        sessionStorage.removeItem(key);
       }
-    });
-  });
+    }
+  } catch {
+    // ignore storage errors
+  }
 }
 
 async function fetchApi<T>(path: string): Promise<T> {
-  const cached = cache.get(path);
+  const cached = readCache(path);
   if (cached && Date.now() - cached.ts < CACHE_TTL) {
     return cached.data as T;
   }
 
-  const result = await enqueue(async () => {
-    const res = await fetch(`${BASE}${path}`);
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const json = await res.json();
-    return json.MRData as T;
-  });
+  // Dedupe concurrent requests for the same path (e.g. current driver ids
+  // requested by several pages at once).
+  const pending = inflight.get(path);
+  if (pending) return pending as Promise<T>;
 
-  cache.set(path, { data: result, ts: Date.now() });
-  return result;
+  const request = (async () => {
+    await acquire();
+    try {
+      const res = await fetch(`${BASE}${path}`);
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json = await res.json();
+      const data = json.MRData as T;
+      writeCache(path, { data, ts: Date.now() });
+      return data;
+    } finally {
+      release();
+      inflight.delete(path);
+    }
+  })();
+
+  inflight.set(path, request);
+  return request;
 }
 
 export async function getSeasons(): Promise<Season[]> {
-  const data = await fetchApi<{ SeasonTable: { Seasons: Season[] } }>(
-    "/seasons.json?limit=100&offset=0"
-  );
-  const more = await fetchApi<{ SeasonTable: { Seasons: Season[] } }>(
-    "/seasons.json?limit=100&offset=100"
-  );
-  return [...data.SeasonTable.Seasons, ...more.SeasonTable.Seasons];
+  const first = await fetchApi<{
+    total: string;
+    SeasonTable: { Seasons: Season[] };
+  }>("/seasons.json?limit=100&offset=0");
+
+  const total = parseInt(first.total, 10);
+  const seasons = [...first.SeasonTable.Seasons];
+
+  const remaining = Math.ceil((total - 100) / 100);
+  for (let i = 1; i <= remaining; i++) {
+    const page = await fetchApi<{ SeasonTable: { Seasons: Season[] } }>(
+      `/seasons.json?limit=100&offset=${i * 100}`
+    );
+    seasons.push(...page.SeasonTable.Seasons);
+  }
+
+  return seasons;
 }
 
 export async function getRaces(year: string): Promise<Race[]> {
@@ -97,20 +177,6 @@ export async function getConstructorStandings(
   return data.StandingsTable.StandingsLists[0]?.ConstructorStandings ?? [];
 }
 
-export async function getDrivers(
-  limit = 50,
-  offset = 0
-): Promise<{ drivers: Driver[]; total: number }> {
-  const data = await fetchApi<{
-    total: string;
-    DriverTable: { Drivers: Driver[] };
-  }>(`/drivers.json?limit=${limit}&offset=${offset}`);
-  return {
-    drivers: data.DriverTable.Drivers,
-    total: parseInt(data.total, 10),
-  };
-}
-
 const API_PAGE_LIMIT = 100;
 
 export async function getAllDrivers(): Promise<Driver[]> {
@@ -148,18 +214,44 @@ export async function getCurrentCircuitIds(): Promise<Set<string>> {
   return new Set(data.CircuitTable.Circuits.map((c) => c.circuitId));
 }
 
-export async function getCircuitSeasons(circuitId: string): Promise<Season[]> {
+export async function getRace(
+  year: string,
+  round: string
+): Promise<Race | null> {
+  const data = await fetchApi<{ RaceTable: { Races: Race[] } }>(
+    `/${year}/${round}.json`
+  );
+  return data.RaceTable.Races[0] ?? null;
+}
+
+export async function getQualifyingResults(
+  year: string,
+  round: string
+): Promise<QualifyingResult[]> {
   const data = await fetchApi<{
-    total: string;
-    RaceTable: { Races: { season: string; url: string }[] };
-  }>(`/circuits/${circuitId}/races.json?limit=100`);
-  const seasonsMap = new Map<string, string>();
-  for (const r of data.RaceTable.Races) {
-    seasonsMap.set(r.season, r.url);
-  }
-  return [...seasonsMap.entries()]
-    .map(([season, url]) => ({ season, url }))
-    .sort((a, b) => a.season.localeCompare(b.season));
+    RaceTable: { Races: { QualifyingResults?: QualifyingResult[] }[] };
+  }>(`/${year}/${round}/qualifying.json`);
+  return data.RaceTable.Races[0]?.QualifyingResults ?? [];
+}
+
+export async function getSprintResults(
+  year: string,
+  round: string
+): Promise<RaceResult[]> {
+  const data = await fetchApi<{
+    RaceTable: { Races: { SprintResults?: RaceResult[] }[] };
+  }>(`/${year}/${round}/sprint.json`);
+  return data.RaceTable.Races[0]?.SprintResults ?? [];
+}
+
+export async function getPitStops(
+  year: string,
+  round: string
+): Promise<PitStop[]> {
+  const data = await fetchApi<{
+    RaceTable: { Races: { PitStops?: PitStop[] }[] };
+  }>(`/${year}/${round}/pitstops.json?limit=100`);
+  return data.RaceTable.Races[0]?.PitStops ?? [];
 }
 
 export async function getDriver(driverId: string): Promise<Driver | null> {

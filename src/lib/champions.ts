@@ -39,6 +39,7 @@ export const WORLD_CHAMPIONS: ChampionRecord[] = [
   { driverId: "vettel", titles: 4, years: [2010, 2011, 2012, 2013] },
   { driverId: "nico_rosberg", titles: 1, years: [2016] },
   { driverId: "max_verstappen", titles: 4, years: [2021, 2022, 2023, 2024] },
+  { driverId: "norris", titles: 1, years: [2025] },
 ];
 
 const championsMap = new Map(WORLD_CHAMPIONS.map((c) => [c.driverId, c]));

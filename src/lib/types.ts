@@ -33,6 +33,11 @@ export interface Constructor {
   nationality: string;
 }
 
+export interface Session {
+  date: string;
+  time?: string;
+}
+
 export interface Race {
   season: string;
   round: string;
@@ -41,6 +46,12 @@ export interface Race {
   Circuit: Circuit;
   date: string;
   time?: string;
+  FirstPractice?: Session;
+  SecondPractice?: Session;
+  ThirdPractice?: Session;
+  Qualifying?: Session;
+  Sprint?: Session;
+  SprintQualifying?: Session;
 }
 
 export interface RaceResult {
@@ -64,6 +75,24 @@ export interface RaceResult {
 
 export interface RaceWithResults extends Race {
   Results: RaceResult[];
+}
+
+export interface QualifyingResult {
+  number: string;
+  position: string;
+  Driver: Driver;
+  Constructor: Constructor;
+  Q1?: string;
+  Q2?: string;
+  Q3?: string;
+}
+
+export interface PitStop {
+  driverId: string;
+  lap: string;
+  stop: string;
+  time: string;
+  duration: string;
 }
 
 export interface DriverStanding {

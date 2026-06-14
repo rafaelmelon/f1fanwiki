@@ -1,4 +1,10 @@
-const STORAGE_KEY = "f1wiki_pinned_drivers";
+export const STORAGE_KEY = "f1wiki_pinned_drivers";
+export const FAVORITES_EVENT = "f1wiki:favorites-changed";
+
+function notifyChange(): void {
+  // Same-tab listeners (the `storage` event only fires in *other* tabs).
+  window.dispatchEvent(new Event(FAVORITES_EVENT));
+}
 
 export interface PinnedDriver {
   driverId: string;
@@ -26,12 +32,14 @@ export function pinDriver(driver: PinnedDriver): void {
   const current = getPinnedDrivers();
   if (!current.some((d) => d.driverId === driver.driverId)) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...current, driver]));
+    notifyChange();
   }
 }
 
 export function unpinDriver(driverId: string): void {
   const current = getPinnedDrivers().filter((d) => d.driverId !== driverId);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  notifyChange();
 }
 
 export function togglePin(driver: PinnedDriver): boolean {

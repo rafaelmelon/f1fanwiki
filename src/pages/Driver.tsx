@@ -3,6 +3,7 @@ import { getDriver, getDriverSeasons, getDriverStats, getCurrentDriverIds } from
 import type { Driver as DriverType, Season } from "../lib/types";
 import type { DriverStats } from "../lib/api";
 import { useFetch } from "../lib/useFetch";
+import { usePageTitle } from "../lib/usePageTitle";
 import { getChampionRecord } from "../lib/champions";
 import Loader from "../components/Loader";
 import ErrorMessage from "../components/ErrorMessage";
@@ -35,6 +36,8 @@ export default function Driver() {
     [driverId]
   );
   const { data: activeIds } = useFetch<Set<string>>(getCurrentDriverIds);
+
+  usePageTitle(driver ? `${driver.givenName} ${driver.familyName}` : "Driver");
 
   const loading = dl || sl;
   const error = de || se;

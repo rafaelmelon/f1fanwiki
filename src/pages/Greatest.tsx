@@ -3,28 +3,10 @@ import { Link } from "react-router-dom";
 import { GREATEST_DRIVERS, type GreatestDriver } from "../lib/greatest";
 import DriverPhoto from "../components/DriverPhoto";
 import PinButton from "../components/PinButton";
+import SortableHeader, { type SortDir } from "../components/SortableHeader";
+import { usePageTitle } from "../lib/usePageTitle";
 
 type SortKey = "titles" | "wins" | "podiums" | "poles" | "races" | "name" | "winRate";
-type SortDir = "asc" | "desc";
-
-const thClass =
-  "px-3 py-2.5 cursor-pointer select-none hover:text-f1-text transition-colors whitespace-nowrap text-xs uppercase tracking-wider";
-
-function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
-  if (!active) {
-    return (
-      <svg className="ml-1 inline h-3 w-3 opacity-30" viewBox="0 0 10 14" fill="currentColor">
-        <path d="M5 0L10 5H0z" />
-        <path d="M5 14L0 9H10z" />
-      </svg>
-    );
-  }
-  return (
-    <svg className="ml-1 inline h-3 w-3 text-f1-red" viewBox="0 0 10 6" fill="currentColor">
-      {dir === "asc" ? <path d="M5 0L10 6H0z" /> : <path d="M5 6L0 0H10z" />}
-    </svg>
-  );
-}
 
 function TitleStars({ count }: { count: number }) {
   return (
@@ -41,6 +23,7 @@ function winRate(d: GreatestDriver): number {
 }
 
 export default function Greatest() {
+  usePageTitle("Greatest Drivers");
   const [sortKey, setSortKey] = useState<SortKey>("titles");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [eraFilter, setEraFilter] = useState("");
@@ -137,27 +120,13 @@ export default function Greatest() {
           <thead>
             <tr className="border-b border-f1-border text-left text-f1-text-muted">
               <th className="px-3 py-2.5 w-8 text-xs uppercase tracking-wider">#</th>
-              <th className={thClass} onClick={() => toggleSort("name")}>
-                Driver <SortIcon active={sortKey === "name"} dir={sortDir} />
-              </th>
-              <th className={thClass} onClick={() => toggleSort("titles")}>
-                Titles <SortIcon active={sortKey === "titles"} dir={sortDir} />
-              </th>
-              <th className={thClass} onClick={() => toggleSort("wins")}>
-                Wins <SortIcon active={sortKey === "wins"} dir={sortDir} />
-              </th>
-              <th className={`${thClass} hidden sm:table-cell`} onClick={() => toggleSort("podiums")}>
-                Podiums <SortIcon active={sortKey === "podiums"} dir={sortDir} />
-              </th>
-              <th className={`${thClass} hidden md:table-cell`} onClick={() => toggleSort("poles")}>
-                Poles <SortIcon active={sortKey === "poles"} dir={sortDir} />
-              </th>
-              <th className={`${thClass} hidden md:table-cell`} onClick={() => toggleSort("races")}>
-                Races <SortIcon active={sortKey === "races"} dir={sortDir} />
-              </th>
-              <th className={`${thClass} hidden lg:table-cell`} onClick={() => toggleSort("winRate")}>
-                Win % <SortIcon active={sortKey === "winRate"} dir={sortDir} />
-              </th>
+              <SortableHeader label="Driver" active={sortKey === "name"} dir={sortDir} onSort={() => toggleSort("name")} />
+              <SortableHeader label="Titles" active={sortKey === "titles"} dir={sortDir} onSort={() => toggleSort("titles")} />
+              <SortableHeader label="Wins" active={sortKey === "wins"} dir={sortDir} onSort={() => toggleSort("wins")} />
+              <SortableHeader label="Podiums" active={sortKey === "podiums"} dir={sortDir} onSort={() => toggleSort("podiums")} className="hidden sm:table-cell" />
+              <SortableHeader label="Poles" active={sortKey === "poles"} dir={sortDir} onSort={() => toggleSort("poles")} className="hidden md:table-cell" />
+              <SortableHeader label="Races" active={sortKey === "races"} dir={sortDir} onSort={() => toggleSort("races")} className="hidden md:table-cell" />
+              <SortableHeader label="Win %" active={sortKey === "winRate"} dir={sortDir} onSort={() => toggleSort("winRate")} className="hidden lg:table-cell" />
               <th className="px-3 py-2.5 hidden lg:table-cell text-xs uppercase tracking-wider text-f1-text-muted">
                 Championships
               </th>
@@ -183,7 +152,7 @@ export default function Greatest() {
                 <td className="px-3 py-2.5">
                   <div className="flex items-center gap-3">
                     <DriverPhoto
-                      wikipediaUrl={`http://en.wikipedia.org/wiki/${d.givenName}_${d.familyName}`}
+                      wikipediaUrl={`https://en.wikipedia.org/wiki/${d.givenName}_${d.familyName}`}
                       name={`${d.givenName} ${d.familyName}`}
                       size="sm"
                     />
@@ -230,7 +199,7 @@ export default function Greatest() {
       </div>
 
       <p className="mt-6 text-xs text-f1-text-muted">
-        Career stats as of end of 2024 season. Click any driver name for live stats from the API.
+        Active drivers' career stats updated through the 2025 season; retired drivers are final. Click any driver name for live stats from the API.
       </p>
     </div>
   );

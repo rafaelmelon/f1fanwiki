@@ -13,8 +13,8 @@ export interface GreatestDriver {
 }
 
 export const GREATEST_DRIVERS: GreatestDriver[] = [
-  { driverId: "max_verstappen", givenName: "Max", familyName: "Verstappen", nationality: "Dutch", titles: 4, wins: 63, podiums: 112, poles: 40, races: 209, championshipYears: [2021, 2022, 2023, 2024], era: "2010s–present" },
-  { driverId: "hamilton", givenName: "Lewis", familyName: "Hamilton", nationality: "British", titles: 7, wins: 105, podiums: 202, poles: 104, races: 356, championshipYears: [2008, 2014, 2015, 2017, 2018, 2019, 2020], era: "2000s–present" },
+  { driverId: "max_verstappen", givenName: "Max", familyName: "Verstappen", nationality: "Dutch", titles: 4, wins: 71, podiums: 128, poles: 64, races: 239, championshipYears: [2021, 2022, 2023, 2024], era: "2010s–present" },
+  { driverId: "hamilton", givenName: "Lewis", familyName: "Hamilton", nationality: "British", titles: 7, wins: 105, podiums: 205, poles: 118, races: 386, championshipYears: [2008, 2014, 2015, 2017, 2018, 2019, 2020], era: "2000s–present" },
   { driverId: "michael_schumacher", givenName: "Michael", familyName: "Schumacher", nationality: "German", titles: 7, wins: 91, podiums: 155, poles: 68, races: 308, championshipYears: [1994, 1995, 2000, 2001, 2002, 2003, 2004], era: "1990s–2000s" },
   { driverId: "vettel", givenName: "Sebastian", familyName: "Vettel", nationality: "German", titles: 4, wins: 53, podiums: 122, poles: 57, races: 300, championshipYears: [2010, 2011, 2012, 2013], era: "2000s–2020s" },
   { driverId: "fangio", givenName: "Juan Manuel", familyName: "Fangio", nationality: "Argentine", titles: 5, wins: 24, podiums: 35, poles: 29, races: 52, championshipYears: [1951, 1954, 1955, 1956, 1957], era: "1950s" },
@@ -24,7 +24,8 @@ export const GREATEST_DRIVERS: GreatestDriver[] = [
   { driverId: "stewart", givenName: "Jackie", familyName: "Stewart", nationality: "British", titles: 3, wins: 27, podiums: 43, poles: 17, races: 99, championshipYears: [1969, 1971, 1973], era: "1960s–1970s" },
   { driverId: "piquet", givenName: "Nelson", familyName: "Piquet", nationality: "Brazilian", titles: 3, wins: 23, podiums: 60, poles: 24, races: 204, championshipYears: [1981, 1983, 1987], era: "1980s" },
   { driverId: "jack_brabham", givenName: "Jack", familyName: "Brabham", nationality: "Australian", titles: 3, wins: 14, podiums: 31, poles: 13, races: 126, championshipYears: [1959, 1960, 1966], era: "1950s–1960s" },
-  { driverId: "alonso", givenName: "Fernando", familyName: "Alonso", nationality: "Spanish", titles: 2, wins: 32, podiums: 106, poles: 22, races: 400, championshipYears: [2005, 2006], era: "2000s–present" },
+  { driverId: "norris", givenName: "Lando", familyName: "Norris", nationality: "British", titles: 1, wins: 11, podiums: 45, poles: 29, races: 158, championshipYears: [2025], era: "2010s–present" },
+  { driverId: "alonso", givenName: "Fernando", familyName: "Alonso", nationality: "Spanish", titles: 2, wins: 32, podiums: 106, poles: 23, races: 434, championshipYears: [2005, 2006], era: "2000s–present" },
   { driverId: "clark", givenName: "Jim", familyName: "Clark", nationality: "British", titles: 2, wins: 25, podiums: 32, poles: 33, races: 72, championshipYears: [1963, 1965], era: "1960s" },
   { driverId: "ascari", givenName: "Alberto", familyName: "Ascari", nationality: "Italian", titles: 2, wins: 13, podiums: 17, poles: 14, races: 32, championshipYears: [1952, 1953], era: "1950s" },
   { driverId: "graham_hill", givenName: "Graham", familyName: "Hill", nationality: "British", titles: 2, wins: 14, podiums: 36, poles: 13, races: 176, championshipYears: [1962, 1968], era: "1960s" },

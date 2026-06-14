@@ -2,10 +2,12 @@ import { Link } from "react-router-dom";
 import { getSeasons } from "../lib/api";
 import type { Season } from "../lib/types";
 import { useFetch } from "../lib/useFetch";
+import { usePageTitle } from "../lib/usePageTitle";
 import Loader from "../components/Loader";
 import ErrorMessage from "../components/ErrorMessage";
 
 export default function Seasons() {
+  usePageTitle("All Seasons");
   const { data: seasons, loading, error } = useFetch<Season[]>(getSeasons);
 
   const sorted = seasons ? [...seasons].sort((a, b) => +b.season - +a.season) : [];

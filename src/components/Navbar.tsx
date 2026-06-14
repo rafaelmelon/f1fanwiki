@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { getPinnedDrivers } from "../lib/favorites";
+import { getPinnedDrivers, FAVORITES_EVENT, STORAGE_KEY } from "../lib/favorites";
 
 const links = [
   { to: "/", label: "Home" },
+  { to: "/race", label: "Race Weekend" },
   { to: "/seasons", label: "Seasons" },
   { to: "/drivers", label: "Drivers" },
   { to: "/greatest", label: "Greatest" },
@@ -21,14 +22,13 @@ export default function Navbar() {
     update();
 
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === "f1wiki_pinned_drivers") update();
+      if (e.key === STORAGE_KEY) update();
     };
-    window.addEventListener("storage", handleStorage);
-
-    const interval = setInterval(update, 1000);
+    window.addEventListener("storage", handleStorage); // cross-tab
+    window.addEventListener(FAVORITES_EVENT, update); // same-tab
     return () => {
       window.removeEventListener("storage", handleStorage);
-      clearInterval(interval);
+      window.removeEventListener(FAVORITES_EVENT, update);
     };
   }, []);
 

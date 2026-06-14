@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getDriverStats } from "../lib/api";
 import type { DriverStats } from "../lib/api";
 import { getPinnedDrivers, unpinDriver, type PinnedDriver } from "../lib/favorites";
+import { usePageTitle } from "../lib/usePageTitle";
 import Loader from "../components/Loader";
 import ErrorMessage from "../components/ErrorMessage";
 import DriverPhoto from "../components/DriverPhoto";
@@ -13,6 +14,7 @@ interface DriverWithStats extends PinnedDriver {
 }
 
 export default function Compare() {
+  usePageTitle("Compare Drivers");
   const [drivers, setDrivers] = useState<DriverWithStats[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [initialLoad, setInitialLoad] = useState(true);
